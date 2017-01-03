@@ -1,0 +1,329 @@
+= Java 8 - Livro Casa do Codigo
+
+== forEach
+
+ - Recebe como parametro um objeto do tipo (java.util.function.Consumer) que tem o método: 
+ 	- *accept(T)*
+ - java.util.function: novo pacote do Java 8
+
+----
+// Uso do forEach criando uma classe anonima que implementa java.util.function.Consumer
+        usuarios.forEach(new Consumer<Usuario>() {
+            public void accept(Usuario usuario) {
+                System.out.println(usuario.getNome());
+            }
+        });
+----
+
+== Lambda
+
+- Uma maneira mais simples de implementar uma interface que só tem um método. Como no caso anterior.
+
+Por exemplo, em vez de:
+----
+Consumer mostrador = new Consumer<Usuario>() {
+    public void accept(Usuario usuario) {
+        System.out.println(usuario.getNome());
+    }
+}
+----
+
+Fazemos assim:
+----
+Consumer<Usuario> mostrador = 
+	(Usuario u) -> {System.out.println(u.getNome());};
+----
+
+1 - O compilador ve primeiro: *Consumer<Usuario> mostrador =*  
+Ele sabe que esta atribuindo a uma interface *Consumer<Usuario>* e vai tentar *jogar esse código no único método que essa interface define*.
+
+
+2 - Não é preciso informar o método accept, isso é inferido durante a compilação.
+O compilador consegue também inferir o tipo, sem a necessidade de informar Usuario, nem parênteses.
+Melhorando:
+----
+Consumer<Usuario> mostrador = u -> {System.out.println(u.getNome());};
+----
+
+
+3 - Como ele sabe que o conteúdo vai conter dentro do método não é preciso informar as chaves.
+Melhorando:
+----
+Consumer<Usuario> mostrador = u -> System.out.println(u.getNome());
+----
+
+
+4 - Nesse caso como sabemos que o forEach recebe como parametro a interface Consumer<Usuario> que possui um único método accept(). Podemos passar diretamente o lambda para o argumento do método.
+----
+usuarios.forEach(u -> System.out.println(u.getNome()));
+----
+
+== Lambdas
+
+- Toda interface java que *possui apenas um método abstrato* pode ser instanciada com uma expressão lambda.
+- Essa interface é chamada de *interface funcional*.
+
+Existem outras interfaces antigas de um método somente do java 8 que podem ser usadas com lambda (Interfaces funcionais):
+* java.util.Comparator
+* java.util.concurrent.Callable
+* java.io.FileFilter
+* java.lang.Runnable
+
+@FunctionalInterface
+Garante que aquela interface so vai possuir um método. Se alguem implementar outro método nela vai dar erro de compilação
+
+Functional Interfaces = SAM Types (Single Abstract Method)
+						Interfaces com um único método abstrato
+
+O Lambda por si só não existe, existe sim uma expressão lambda atribuída/inferida a uma interface funcional.
+Se uma interface funcional não está envolvida o compilador não consegue trabalhar com ela.
+
+É possivel capturar variaveis locais finais (Assim como uma classe anonima), ou não declaradas como finais :) .. Maass
+Se nao for declarada como final vc nao pode alterar ela depois do metodo.
+Na verdade no Java 8 nas classes anonimas vc pode acessar variaveis nao finais desde que nao altere as mesmas apos o uso.
+
+== Default Methods
+
+Interfaces podem conter codigo a ser executado, sao os métodos default.
+Uma Interface Funcional só pode ter um método abstrato, mas pode ter outro método default.
+É uma forma de declarar um código na interface e garantir que todos que implementarem terão o código.
+
+Metodos nas interfaces:
+java.lang.Iterable
+----
+default void forEach(Consumer<? super T> action) {
+    Objects.requireNonNull(action);
+    for (T t : this) {
+        action.accept(t);
+    }
+}
+----
+
+java.lang.Collection
+----
+default boolean removeIf(Predicate<? super E> filter) {
+    Objects.requireNonNull(filter);
+    boolean removed = false;
+    final Iterator<E> each = iterator();
+    while (each.hasNext()) {
+        if (filter.test(each.next())) {
+            each.remove();
+            removed = true;
+        }
+    }
+    return removed;
+}
+
+default Stream<E> stream() {
+    return StreamSupport.stream(spliterator(), false);
+}
+
+default Stream<E> parallelStream() {
+    return StreamSupport.stream(spliterator(), true);
+}
+----
+
+java.util.Map
+----
+default V getOrDefault(Object key, V defaultValue) {
+    V v;
+    return (((v = get(key)) != null) || containsKey(key))
+        ? v
+        : defaultValue;
+}
+
+default void forEach(BiConsumer<? super K, ? super V> action) {
+    Objects.requireNonNull(action);
+    for (Map.Entry<K, V> entry : entrySet()) {
+        K k;
+        V v;
+        try {
+            k = entry.getKey();
+            v = entry.getValue();
+        } catch(IllegalStateException ise) {
+            // this usually means the entry is no longer in the map.
+            throw new ConcurrentModificationException(ise);
+        }
+        action.accept(k, v);
+    }
+}
+
+default void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+    Objects.requireNonNull(function);
+    for (Map.Entry<K, V> entry : entrySet()) {
+        K k;
+        V v;
+        try {
+            k = entry.getKey();
+            v = entry.getValue();
+        } catch(IllegalStateException ise) {
+            // this usually means the entry is no longer in the map.
+            throw new ConcurrentModificationException(ise);
+        }
+
+        // ise thrown from function is not a cme.
+        v = function.apply(k, v);
+
+        try {
+            entry.setValue(v);
+        } catch(IllegalStateException ise) {
+            // this usually means the entry is no longer in the map.
+            throw new ConcurrentModificationException(ise);
+        }
+    }
+}
+
+default V putIfAbsent(K key, V value) {
+    V v = get(key);
+    if (v == null) {
+        v = put(key, value);
+    }
+
+    return v;
+}
+
+default boolean remove(Object key, Object value) {
+    Object curValue = get(key);
+    if (!Objects.equals(curValue, value) ||
+        (curValue == null && !containsKey(key))) {
+        return false;
+    }
+    remove(key);
+    return true;
+}
+
+default boolean replace(K key, V oldValue, V newValue) {
+    Object curValue = get(key);
+    if (!Objects.equals(curValue, oldValue) ||
+        (curValue == null && !containsKey(key))) {
+        return false;
+    }
+    put(key, newValue);
+    return true;
+}
+
+default V replace(K key, V value) {
+    V curValue;
+    if (((curValue = get(key)) != null) || containsKey(key)) {
+        curValue = put(key, value);
+    }
+    return curValue;
+}
+
+default V computeIfAbsent(K key,
+        Function<? super K, ? extends V> mappingFunction) {
+    Objects.requireNonNull(mappingFunction);
+    V v;
+    if ((v = get(key)) == null) {
+        V newValue;
+        if ((newValue = mappingFunction.apply(key)) != null) {
+            put(key, newValue);
+            return newValue;
+        }
+    }
+
+    return v;
+}
+
+
+default V computeIfPresent(K key,
+        BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+    Objects.requireNonNull(remappingFunction);
+    V oldValue;
+    if ((oldValue = get(key)) != null) {
+        V newValue = remappingFunction.apply(key, oldValue);
+        if (newValue != null) {
+            put(key, newValue);
+            return newValue;
+        } else {
+            remove(key);
+            return null;
+        }
+    } else {
+        return null;
+    }
+}
+
+default V compute(K key,
+        BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+    Objects.requireNonNull(remappingFunction);
+    V oldValue = get(key);
+
+    V newValue = remappingFunction.apply(key, oldValue);
+    if (newValue == null) {
+        // delete mapping
+        if (oldValue != null || containsKey(key)) {
+            // something to remove
+            remove(key);
+            return null;
+        } else {
+            // nothing to do. Leave things as they were.
+            return null;
+        }
+    } else {
+        // add or replace old mapping
+        put(key, newValue);
+        return newValue;
+    }
+}
+
+default V merge(K key, V value,
+        BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+    Objects.requireNonNull(remappingFunction);
+    Objects.requireNonNull(value);
+    V oldValue = get(key);
+    V newValue = (oldValue == null) ? value :
+               remappingFunction.apply(oldValue, value);
+    if(newValue == null) {
+        remove(key);
+    } else {
+        put(key, newValue);
+    }
+    return newValue;
+}
+----
+
+Lembrando:
+E - Element (used extensively by the Java Collections Framework)
+K - Key
+N - Number
+T - Type
+V - Value
+S,U,V etc. - 2nd, 3rd, 4th types
+
+OBS.:
+Com os métodos default não há hernança múltipla ou compartilhamento de estado.
+
+*Comparator.comparing*
+ - O comparting é um método estático na interface Comparator que recebe uma Function, ou seja, uma lambda.
+ - Dado essa lambda passada do tipo T, ele devolve um objeto Comparable do tipo T.
+
+Indexando pela ordem natural:
+
+List.sort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
