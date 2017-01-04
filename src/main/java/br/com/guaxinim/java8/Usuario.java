@@ -10,12 +10,16 @@ class Usuario {
         this.nome = nome;
     }
 
+    public Usuario(String nome) {
+        this.nome = nome;
+    }
+
     public boolean isModerador() {
         return moderador;
     }
 
-    public void tornaModerador(boolean moderador) {
-        this.moderador = moderador;
+    public void tornaModerador() {
+        this.moderador = true;
     }
 
     public int getPontos() {
@@ -32,5 +36,13 @@ class Usuario {
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    @Override
+    public String toString() {
+        return "Usuario{" +
+                "nome='" + nome + '\'' +
+                ", pontos=" + pontos +
+                '}';
     }
 }

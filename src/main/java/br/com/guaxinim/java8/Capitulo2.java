@@ -1,9 +1,7 @@
 package br.com.guaxinim.java8;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 
 public class Capitulo2 {
 
@@ -144,6 +142,64 @@ public class Capitulo2 {
         ToIntFunction<Usuario> extraiPontos2 = u -> u.getPontos();
         Comparator<Usuario> comparator3 = Comparator.comparingInt(extraiPontos2);
         usuarios.sort(comparator);
+
+        System.out.println("================== Method reference");
+
+        // O recurso do method reference é tratado pelo compilador da mesma forma que uma expressão lambda
+        Consumer<Usuario> tornaModerador = Usuario::tornaModerador;
+        li.forEach(tornaModerador);
+
+        // Usando em uma lista
+        li.forEach(Usuario::tornaModerador);            // Nao ha reflection
+
+        // Usando em um metodo estatico
+        Comparator.comparing(Usuario::getNome);
+
+        usuarios.sort(Comparator.comparingInt(Usuario::getPontos));
+
+        System.out.println("================== Dois criterios no comparator - thenComparing");
+
+        // Compara pelos pontos, se tiver dois iguais compara pelo nome
+        Comparator<Usuario> c = Comparator.comparingInt(Usuario::getPontos).thenComparing(Usuario::getNome);
+        usuarios.sort(c);
+
+        // Posicionando os nulos no final:
+        usuarios.sort(Comparator.nullsLast(Comparator.comparing(Usuario::getNome)));
+
+        // Reverso
+        usuarios.sort(Comparator.comparing(Usuario::getNome).reversed());
+
+        System.out.println("================== Metodos de instancia");
+
+        Usuario rodrigo = new Usuario("Rodrigo Sousa", 30);
+        Runnable run = rodrigo::getNome;                        // Vai fazer com que o metodo da instancia seja invocado
+        run.run();
+
+        // Os dois abaixo sao equivalentes:
+        Runnable bloco1 = rodrigo::tornaModerador;
+        Runnable bloco2 = () -> rodrigo.tornaModerador();
+
+        // Referenciamento metodos que recebem argumentos
+        usuarios.forEach(System.out::println);
+        //Equivale a:
+        //usuarios.forEach(u -> System.out.println(u));
+
+
+        System.out.println("================== Method reference com construtores - Constructor reference");
+
+        //Usuario marcos = Usuario::new;        // Erro, nao eh interface funcional,
+        //  Para isso temos a interface funcional Supllier<T>
+
+        Function<String, Usuario> criadorUsuarios = Usuario::new;
+        Usuario carlos = criadorUsuarios.apply("Carlos");
+        Usuario robson = criadorUsuarios.apply("Robson");
+
+        // Com 2 parametros
+        BiFunction<String, Integer, Usuario> criadorBi = Usuario::new;
+        Usuario joao = criadorBi.apply("Joao", 30);
+        Usuario maria = criadorBi.apply("Maria", 30);
+
+        
 
     }
 }
