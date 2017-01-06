@@ -1,5 +1,7 @@
 package br.com.guaxinim.java8;
 
+import com.sun.org.apache.xpath.internal.functions.FunctionOneArg;
+
 import java.util.*;
 import java.util.function.*;
 
@@ -194,12 +196,20 @@ public class Capitulo2 {
         Usuario carlos = criadorUsuarios.apply("Carlos");
         Usuario robson = criadorUsuarios.apply("Robson");
 
+        Function<String, String> fu = String::new;
+        fu.apply("Hello");
+
         // Com 2 parametros
         BiFunction<String, Integer, Usuario> criadorBi = Usuario::new;
         Usuario joao = criadorBi.apply("Joao", 30);
         Usuario maria = criadorBi.apply("Maria", 30);
 
-        
+        // Bifunction sem boxing
+        BiFunction<Integer, Integer, Integer> max = Math::max;      // Método estático: Math.max   -> Recebe dois inteiros e devolve um inteiro
+        ToIntBiFunction<Integer, Integer> max2 = Math::max;         // Essa functon já retorna um int então só se passa os dois parametros inteiros
+        IntBinaryOperator max3 = Math::max;                         // Essa interface funcional serve para passar a function para algum método
+
+        //
 
     }
 }
