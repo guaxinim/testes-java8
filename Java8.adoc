@@ -350,6 +350,58 @@ Stream<Usuario> stream = usuario.stream();
 stream.filter(u -> {return u.getPontos() > 100});
 ----
 
+Fica assim:
+----
+usuarios.stream()
+        .filter(u -> u.getPontos() > 100)
+        .forEach(Usuario::tornaModerador);
+----
+
+=== Collectors
+
+Como retornar de um Stream novamente para uma lista?
+
+Para isso preciso usar a Supllier que recebe 3 argumentos (3 interfaces funcionais):
+1 - Uma Factory que vai criar o objeto que sera devolvido no final da coleta
+2 - O metodo que sera invocado para adicionar cada elemento
+3 - Pode ser evocado numa estrategia de adicionar mais de um elemento ao mesmo tempo (paralelo)
+
+Exemplo:
+----
+Supplier<ArrayList<Usuario>> supplier = ArrayList::new;
+BiConsumer<ArrayList<Usuario>, Usuario> accumulator = ArrayList::add;
+BiConsumer<ArrayList<Usuario>, ArrayList<Usuario>> combiner = ArrayList::addAll;
+
+
+List<Usuario> maisQue100 = usuarios.stream()
+    .filter(u -> u.getPontos() > 100)
+    .collect(supplier, accumulator, combiner);
+----
+
+Simplificado:
+----
+usuarios.stream()
+        .filter(usuario -> usuario.getPontos() > 100)
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+----
+
+A interface Collector é:
+Alguém que tem um Supplier, um Acumulator e um Combiner
+
+MAS já existem métodos prontos que retornam collectors para lista:
+----
+usuarios.stream()
+        .filter(u -> u.getPontos() > 100)
+        .collect(Collectors.toList());
+----
+
+Ou para Set:
+----
+Set<Usuario> maisQue100 = usuarios
+        .stream()
+        .filter(u -> u.getPontos() > 100)
+        .collect(toSet());
+----
 
 
 

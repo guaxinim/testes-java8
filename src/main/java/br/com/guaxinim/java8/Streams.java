@@ -1,8 +1,10 @@
 package br.com.guaxinim.java8;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Streams {
 
@@ -46,6 +48,22 @@ public class Streams {
         System.out.println("================== Collectors ");
 
         // Como atribuir o stream a uma lista?
+        usuarios.stream()
+                .filter(usuario -> usuario.getPontos() > 100)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+                // parametros acima:
+                // 1 - Collection de cricao
+                // 2 - Metodo de adicao
+                // 3 - Metodo de adicao em paralelo
+
+        // Interface collector:
+        // Alguem que tem um Supplier, um Acumulator e um Combiner
+
+        // Mas ja existem tambem collectors prontos:
+        usuarios.stream()
+                .filter(u -> u.getPontos() > 100)
+                .collect(Collectors.toList());
+
 
 
     }
